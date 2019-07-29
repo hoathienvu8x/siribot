@@ -20,7 +20,8 @@ else:
     siri.saveBrain(BRAIN_FILE)
 
 def get_answer(handler):
-    question = urllib.unquote(handler.path[10:])
+    question = handler.path[10:].split("/",1)[0]
+    question = urllib.unquote(question)
     answer = siri.respond(question)
     if answer == "":
         answer = "I couldn't understand what you said! Would you like to repeat?"
@@ -28,6 +29,17 @@ def get_answer(handler):
         "status":"success",
         "data":answer,
         "msg":question
+    }
+    return resp
+
+#curl -X PUT -d '{"pattern": "HI SIRI","template":"Hello sir"}' "http://localhost:8800/learn/"
+def siri_learn(handler):
+    key = urllib.unquote(handler.path[7:])
+    payload = handler.get_payload()
+    resp = {
+        "status":"success",
+        "data":payload,
+        "msg":"Siri learned"
     }
     return resp
 
@@ -46,8 +58,12 @@ class SiriHandle(BaseHTTPServer.BaseHTTPRequestHandler):
                 'GET' : no_route,
                 'media_type':'application/json'
             },
-            r'^/question/':{
+            r'^/question/([^/]+)?':{
                 'GET':get_answer,
+                'media_type':'application/json'
+            },
+            r'^/learn/':{
+                'PUT':siri_learn,
                 'media_type':'application/json'
             }
         }
@@ -67,6 +83,12 @@ class SiriHandle(BaseHTTPServer.BaseHTTPRequestHandler):
 
     def do_DELETE(self):
         self.handle_method('DELETE')
+
+    def get_payload(self):
+        payload_len = int(self.headers.getheader('content-length', 0))
+        payload = self.rfile.read(payload_len)
+        payload = json.loads(payload)
+        return payload
 
     def get_route(self):
         for path, route in self.routes.iteritems():
