@@ -101,7 +101,7 @@ class SiriHandle(BaseHTTPServer.BaseHTTPRequestHandler):
         if route is None:
             self.send_response(404)
             self.end_headers()
-            resp = no_route()
+            resp = no_route(self)
             self.wfile.write(json.dumps(resp))
         else:
             if method == 'HEAD':
@@ -118,7 +118,7 @@ class SiriHandle(BaseHTTPServer.BaseHTTPRequestHandler):
                     self.end_headers()
                     self.wfile.write(json.dumps(resp))
                 else:
-                    resp = no_route()
+                    resp = no_route(self)
                     self.send_response(405)
                     self.end_headers()
                     self.wfile.write(json.dumps(resp))

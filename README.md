@@ -6,7 +6,7 @@
 #!/bin/bash
 
 ok=$(python -c "try:
-	import aimll
+	import aiml
 	print('OK')
 except ImportError:
 	print('NO')")
