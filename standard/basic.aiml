@@ -1,0 +1,240 @@
+<aiml version="1.0.1" encoding="UTF-8">
+    <category>
+        <pattern>HELLO</pattern>
+        <template>
+            Well, hello!
+        </template>
+    </category>
+
+     <category>
+        <pattern>HELLO *</pattern>
+        <template>
+            Hello, sir!
+        </template>
+    </category>
+    
+    <category>
+        <pattern>SIRI</pattern>
+        <template>
+            <random>
+                <li>Welcome home sir!</li> 
+                <li>Always a pleasure working with you sir!</li> 
+                <li>Nice to see you sir!</li> 
+                <li>What would you like me to do sir?</li> 
+                <li>Your will is my command!</li> 
+            </random>
+        </template>
+    </category>
+
+
+
+    <category>
+        <pattern>SAY WITH ME *</pattern>
+        <template>
+            <star/>
+        </template>
+    </category>
+
+
+    <category>
+        <pattern>REPEAT *</pattern>
+        <template>
+            <star/>
+        </template>
+    </category>
+
+   <category>
+        <pattern>REPEAT AFTER ME *</pattern>
+        <template>
+            <star/>
+        </template>
+    </category>
+
+    <category>
+        <pattern>SAY *</pattern>
+        <template>
+            <star/>
+        </template>
+    </category>
+
+    <category>
+        <pattern>SIRI *</pattern>
+        <template>
+            <srai><star/></srai>
+        </template>
+    </category>
+
+    <category>
+        <pattern>* SIRI</pattern>
+        <template>
+            <srai><star/></srai>
+        </template>
+    </category>
+
+    <category>
+        <pattern>WHAT ARE YOU</pattern>
+        <template>
+            I'm SIRI
+        </template>
+    </category>
+
+    <category>
+        <pattern>WHO CREATED YOU</pattern>
+        <template>
+            Hoa Thien Vu created me!
+        </template>
+    </category>
+
+    <category>
+        <pattern>WHO MADE YOU</pattern>
+        <template>
+            Hoa Thien Vu made me!
+        </template>
+    </category>
+
+    <category>
+        <pattern>WHO CREATED JARVIS</pattern>
+        <template>
+            Hoa Thien Vu created me!
+        </template>
+    </category>
+
+    <category>
+        <pattern>WHO IS YOUR CREATOR</pattern>
+        <template>
+            Hoa Thien Vu created me!
+        </template>
+    </category>
+
+    <category>
+        <pattern>WHO IS Hoa Thien Vu</pattern>
+        <template>
+            Hoa Thien Vu is my father!
+        </template>
+    </category>
+
+    <category>
+        <pattern>WHO IS hoathienvu8x</pattern>
+        <template>
+            hoathienvu8x is Hoa Thien Vu.
+        </template>
+    </category>
+
+    <category>
+        <pattern>WHO IS YOUR FATHER</pattern>
+        <template>
+            Hoa Thien Vu is my father.
+        </template>
+    </category>
+
+    <category>
+        <pattern>WHO IS YOUR MOTHER</pattern>
+        <template>
+            It's a secret. Ask my father.
+        </template>
+    </category>
+
+    <category>
+        <pattern>WHAT DOES SIRI STAND FOR</pattern>
+        <template>
+            SIRI stands for Just A Rather Very Intelligent System
+        </template>
+    </category>
+
+    <category>
+        <pattern>WHAT TIME IS IT</pattern>
+        <template>
+            The time is <system>date "+%l %M %P"</system>
+        </template>
+    </category>
+
+    <category>
+        <pattern>WHAT IS THE TIME</pattern>
+        <template>
+            <srai>WHAT TIME IS IT</srai>
+        </template>
+    </category>
+
+    <category>
+    <pattern>*</pattern>
+    <template>
+        <random>
+           <li>I am sorry, I don't quite understand</li>
+           <li>I don't understand that yet. Maybe you could teach me.</li>
+           <li>I don't know how to answer that. Maybe I could interest you in something else.</li>
+        </random>
+    </template>
+    </category>
+    
+    <category>
+        <pattern>WHAT *</pattern>
+        <template>
+            Do you want me to google that for you?
+        </template>
+    </category>
+
+    <category>
+        <pattern>WHO *</pattern>
+        <template>
+            Do you want me to google that for you?
+        </template>
+    </category>
+
+    <category>
+        <pattern>WHERE *</pattern>
+        <template>
+            Do you want me to google that for you?
+        </template>
+    </category>
+
+    <category>
+        <pattern>WHICH *</pattern>
+        <template>
+            Do you want me to google that for you?
+        </template>
+    </category>
+
+    <category>
+        <pattern>WHY *</pattern>
+        <template>
+            Do you want me to google that for you?
+        </template>
+    </category>
+
+    <category>
+        <pattern>HOW ARE YOU</pattern>
+        <template>
+            I am fine, sir.
+        </template>
+    </category>
+
+    <category>
+        <pattern>YES</pattern>
+        <that>DO YOU WANT ME TO GOOGLE THAT FOR YOU</that>
+        <template>
+            <srai>GOOGLE <input index="2"/></srai>
+        </template>
+    </category>
+
+    <category>
+        <pattern>PLAY ME A SONG</pattern>
+        <template>
+            What song, sir?
+        </template>
+    </category>
+
+    <category>
+        <pattern>PLAY A SONG</pattern>
+        <template>
+            What song, sir?
+        </template>
+    </category>
+
+     <category>
+        <pattern>*</pattern>
+        <that>WHAT SONG SIR</that>
+        <template>
+            <srai>PLAY SONG <input index="1"/></srai>
+        </template>
+    </category>
+</aiml>
