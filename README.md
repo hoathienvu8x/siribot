@@ -17,3 +17,11 @@ fi
 
 echo "Install completed"
 ```
+
+## Using code
+
+```bash
+python siri.py
+```
+
+To test open webbrowser `http://localhost:8800/question/hello`
