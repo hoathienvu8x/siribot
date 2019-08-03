@@ -1,12 +1,19 @@
-#!/usr/bin/env python
+import sys, os, re, json, aiml
+from sys import version as python_version
+from cgi import parse_header, parse_multipart
 
-import sys, os, aiml, re, shutil, json, urllib, BaseHTTPServer
+if python_version.startswith('3'):
+    from urllib.parse import parse_qs, unquote
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+    importlib.reload(sys)
+else:
+    from urlparse import parse_qs
+    from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+    from urllib import unquote
+    reload(sys)
+    sys.setdefaultencoding('utf8')
 
 BRAIN_FILE="brain.dump"
-
-reload(sys)
-
-sys.setdefaultencoding('utf8')
 
 siri = aiml.Kernel()
 
@@ -19,55 +26,54 @@ else:
     print("Saving brain file: " + BRAIN_FILE)
     siri.saveBrain(BRAIN_FILE)
 
-def get_answer(handler):
-    question = handler.path[10:].split("/",1)[0]
-    question = urllib.unquote(question)
-    answer = siri.respond(question)
-    if answer == "":
-        answer = "I couldn't understand what you said! Would you like to repeat?"
+def get_answer(handler, ctype = 'application/json'):
+    data = handler.get_payload()
+    handler.send_response(200)
+    handler.send_header('Content-Type',ctype)
+    handler.end_headers()
     resp = {
-        "status":"success",
-        "data":answer,
-        "msg":question
+        'status':'error',
+        'data':None,
+        'msg':'I couldn\'t understand what you said! Would you like to repeat?'
     }
-    return resp
+    if 'question' in data:
+        question = unquote(data['question'][0])
+        answer = siri.respond(question)
+        if answer != u"":
+            resp["status"] = "success"
+            resp["data"] = {
+                'question':question,
+                'answer':answer
+            }
+            resp["msg"] = answer
+        
+    handler.wfile.write(json.dumps(resp))
 
-#curl -X PUT -d '{"pattern": "HI SIRI","template":"Hello sir"}' "http://localhost:8800/learn/"
-def siri_learn(handler):
-    key = urllib.unquote(handler.path[7:])
-    payload = handler.get_payload()
+def siri_learn(handler, ctype = 'application/json'):
+    data = handler.get_payload()
     resp = {
         "status":"success",
         "data":payload,
         "msg":"Siri learned"
     }
-    return resp
+    handler.send_response(200)
+    handler.send_header('Content-Type',ctype)
+    handler.end_headers()
+    handler.wfile.write(json.dumps(resp))
 
-def no_route(handler):
-    resp = {
-        "status":"error",
-        "data":None,
-        "msg":"Sorry, i can't hear from you !"
-    }
-    return resp
-
-class SiriHandle(BaseHTTPServer.BaseHTTPRequestHandler):
+class SiriRequestHandler(BaseHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
-        self.routes = {
-            r'^/$' : {
-                'GET' : no_route,
+        self.routers = {
+            r'^/question$':{
+                'POST':get_answer,
                 'media_type':'application/json'
             },
-            r'^/question/([^/]+)?':{
-                'GET':get_answer,
-                'media_type':'application/json'
-            },
-            r'^/learn/':{
+            r'^/learn$':{
                 'PUT':siri_learn,
                 'media_type':'application/json'
             }
         }
-        return BaseHTTPServer.BaseHTTPRequestHandler.__init__(self, *args, **kwargs)
+        return BaseHTTPRequestHandler.__init__(self, *args, **kwargs)
 
     def do_HEAD(self):
         self.handle_method('HEAD')
@@ -84,57 +90,62 @@ class SiriHandle(BaseHTTPServer.BaseHTTPRequestHandler):
     def do_DELETE(self):
         self.handle_method('DELETE')
 
-    def get_payload(self):
-        payload_len = int(self.headers.getheader('content-length', 0))
-        payload = self.rfile.read(payload_len)
-        payload = json.loads(payload)
-        return payload
-
-    def get_route(self):
-        for path, route in self.routes.iteritems():
-            if re.match(path, self.path):
-                return route
-        return None
+    def no_route(self, msg = None):
+        self.send_response(404)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        message = 'Invalid params'
+        if msg is not None:
+            message = str(msg)
+        if message == '':
+            message = 'Invalid params'
+        self.wfile.write('{"status":"error","data":null,"msg":"'+message+'"}')
 
     def handle_method(self, method):
         route = self.get_route()
         if route is None:
-            self.send_response(404)
-            self.end_headers()
-            resp = no_route(self)
-            self.wfile.write(json.dumps(resp))
+            self.no_route()
         else:
-            if method == 'HEAD':
-                self.send_response(200)
-                if 'media_type' in route:
-                    self.send_header('Content-Type',route['media_type'])
-                self.end_headers()
+            if method in route:
+                ctype = route['media_type'] if 'media_type' in route else 'application/json'
+                route[method](self, ctype)
             else:
-                if method in route:
-                    resp = route[method](self)
-                    self.send_response(200)
-                    if 'media_type' in route:
-                        self.send_header('Content-Type', route['media_type'])
-                    self.end_headers()
-                    self.wfile.write(json.dumps(resp))
-                else:
-                    resp = no_route(self)
-                    self.send_response(405)
-                    self.end_headers()
-                    self.wfile.write(json.dumps(resp))
+                self.send_response(404)
+                self.no_route(method + ' is not supported')
 
-def siri_server(port):
-    http_server = BaseHTTPServer.HTTPServer(('',port), SiriHandle)
-    print 'Start AIML server at port %d' % port
+    def get_route(self):
+        for path, route in self.routers.iteritems():
+            if re.match(path, self.path):
+                return route
+        return None
+
+    def get_payload(self):
+        payload = {}
+        ctype, pdict = parse_header(self.headers['content-type'])
+        if ctype == 'multipart/form-data':
+            payload = parse_multipart(self.rfile, pdict)
+        elif ctype == 'application/x-www-form-urlencoded':
+            length = int(self.headers.getheader('content-length',0))
+            payload = parse_qs(self.rfile.read(length),keep_blank_values=1)
+        elif ctype == 'application/json':
+            length = int(self.headers.getheader('content-length',0))
+            payload = self.rfile.read(length)
+            payload = json.loads(payload)
+        return payload
+
+
+def SiriService(port):
+    SiriServer = HTTPServer(('',port), SiriRequestHandler)
+    print 'Start Siri service at port %d' % port
     try:
-        http_server.serve_forever()
+        SiriServer.serve_forever()
     except KeyboardInterrupt:
         pass
-    print 'Stopping HTTP server'
-    http_server.server_close()
+    print 'Stopping Siri service'
+    SiriServer.server_close()
 
-def main(argv):
-    siri_server(8800)
+def SiriMain(argv):
+    SiriService(8800)
 
 if __name__ == '__main__':
-    main(sys.argv[1:])
+    SiriMain(sys.argv[1:])
